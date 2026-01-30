@@ -1,21 +1,17 @@
-from sqlalchemy import Column, Integer, String, Boolean
+from sqlmodel import SQLModel, Field
 
-from pydantic import BaseModel, Field, ConfigDict
-
-from src.database import Base
+from uuid import UUID, uuid4
 
 
-class User(Base):
+class UserBase(SQLModel):
+    username: str = Field(unique=True, index=True, min_length=3, max_length=20)
+    is_active: bool = True
+
+
+class User(UserBase, table=True):
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True)
-    username = Column(String(20), unique=True, nullable=False)
-    is_active = Column(Boolean, default=True)
-
-
-class UserBase(BaseModel):
-    username: str = Field(min_length=3, max_length=20)
-    is_active: bool = True
+    id: UUID = Field(primary_key=True, default_factory=uuid4)
 
 
 class UserCreate(UserBase):
@@ -23,5 +19,4 @@ class UserCreate(UserBase):
 
 
 class UserOut(UserBase):
-    id: int = Field(...)
-    model_config = ConfigDict(from_attributes=True)
+    id: UUID

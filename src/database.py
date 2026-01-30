@@ -2,11 +2,9 @@ from typing import Annotated
 
 from fastapi import Depends
 
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
-
-class Base(DeclarativeBase): pass
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 
 ASYNC_DATABASE_URL = "postgresql+asyncpg://postgres:1234@localhost:5432/TempNameProject"
