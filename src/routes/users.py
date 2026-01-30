@@ -51,16 +51,3 @@ async def get_user_items(session: SessionDep, user_id: UUID):
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
     item_list = await items_repo.get_list_items_by_user_id(session, user_id)
     return item_list
-
-
-@router.delete("/{user_id}/{item_id}")
-async def delete_user_item_by_id(session: SessionDep, user_id: UUID, item_id: UUID):
-    user = await users_repo.get_user(session, user_id)
-    if not user:
-        raise HTTPException(status_code=404, detail=f"User {user_id} not found")
-
-    item = await items_repo.get_item(session, item_id)
-    if not item:
-        raise HTTPException(status_code=404, detail=f"Item {item_id} not found")
-    await items_repo.delete_item(session, item)
-    return { "status": "deleted"}
