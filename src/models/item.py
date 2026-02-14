@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 class ItemBase(SQLModel):
     title: str = Field(min_length=1, max_length=128)
-    description: str | None = Field(default=None, min_length=1, max_length=128)
+    description: str | None = Field(default=None, max_length=500)
 
 
 class Item(ItemBase, table=True):
