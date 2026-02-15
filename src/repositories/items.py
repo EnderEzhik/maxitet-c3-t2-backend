@@ -29,12 +29,6 @@ async def get_item(session: AsyncSession, item_id: UUID) -> Item | None:
     return await session.get(Item, item_id)
 
 
-# async def get_list_items_by_user_id(session: AsyncSession, user_id: UUID) -> list[Item]:
-#     stmt = select(Item).where(Item.user_id == user_id)
-#     result = await session.execute(stmt)
-#     return result.all()
-
-
 async def get_items_with_filters(session: AsyncSession,
     title: str | None,
     user_id: UUID | None,
