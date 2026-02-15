@@ -6,7 +6,7 @@ async def main():
     conn = await asyncpg.connect(
         user="postgres",
         password="1234",
-        database="TempNameProject",
+        database="MaxitetBackendProject",
         host="localhost",
         port=5432
     )
