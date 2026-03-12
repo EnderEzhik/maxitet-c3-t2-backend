@@ -5,3 +5,6 @@ alembic
 psycopg2-binary
 asyncpg
 sqlmodel
+pydantic-settings
+pyjwt
+pwdlib[argon2,bcrypt]

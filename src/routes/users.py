@@ -1,6 +1,6 @@
-from fastapi import APIRouter, HTTPException, Query
-
 from uuid import UUID
+
+from fastapi import APIRouter, HTTPException, Query
 
 from src.database import SessionDep
 from src.models.user import User, UserCreate, UserUpdate, UserOut, UsersOut

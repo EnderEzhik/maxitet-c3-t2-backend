@@ -1,10 +1,10 @@
-from sqlmodel.ext.asyncio.session import AsyncSession
-
 from uuid import UUID
 
 from sqlmodel import select, func
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.models.user import User, UserCreate, UserUpdate
+from src.core.security import get_password_hash
 
 
 def _apply_users_filters(stmt, username: str | None, is_active: bool | None):
@@ -13,14 +13,17 @@ def _apply_users_filters(stmt, username: str | None, is_active: bool | None):
     if username:
         username = username.strip()
         if username:
-            stmt = stmt.where(User.username.ilike(f'%{username}%'))
+            stmt = stmt.where(User.username.ilike(f"%{username}%"))
     return stmt
 
 
 async def create_user(session: AsyncSession, user_data: UserCreate) -> User:
-    new_user = User(**user_data.model_dump())
+    hashed_password = get_password_hash(user_data.password)
+    user_data = user_data.model_dump(exclude={"password"})
+    new_user = User(**user_data, hashed_password=hashed_password)
     session.add(new_user)
     await session.commit()
+    await session.refresh(new_user)
     return new_user
 
 
@@ -61,6 +64,7 @@ async def update_user(session: AsyncSession, user: User, user_data: UserUpdate) 
     user.sqlmodel_update(user_data)
     session.add(user)
     await session.commit()
+    await session.refresh(user)
     return user
 
 

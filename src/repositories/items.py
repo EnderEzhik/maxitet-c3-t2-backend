@@ -1,11 +1,11 @@
-from sqlmodel.ext.asyncio.session import AsyncSession
+from uuid import UUID
 
 from sqlmodel import select, func
+from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.models.user import User
 from src.models.item import Item, ItemCreate, ItemUpdate
 
-from uuid import UUID
+from src.models.user import User
 
 
 def _apply_items_filters(stmt, title: str | None, user_id: UUID | None):
@@ -14,7 +14,7 @@ def _apply_items_filters(stmt, title: str | None, user_id: UUID | None):
     if title:
         title = title.strip()
         if title:
-            stmt = stmt.where(Item.title.ilike(f'%{title}%'))
+            stmt = stmt.where(Item.title.ilike(f"%{title}%"))
     return stmt
 
 
@@ -22,6 +22,7 @@ async def create_item(session: AsyncSession, user: User, item_data: ItemCreate) 
     new_item = Item(**item_data.model_dump(), user=user)
     session.add(new_item)
     await session.commit()
+    await session.refresh(new_item)
     return new_item
 
 
@@ -55,13 +56,14 @@ async def update_item(
     item: Item,
     item_data: ItemUpdate,
     new_user: User | None = None
-    ) -> Item:
+) -> Item:
     if new_user is not None:
         item.user = new_user
     data = item_data.model_dump(exclude_unset=True, exclude={'user_id'})
     item.sqlmodel_update(data)
     session.add(item)
     await session.commit()
+    await session.refresh(item)
     return item
 
 
