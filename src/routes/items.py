@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
 
-from src.deps import SessionDep
+from src.deps import CurrentUser, SessionDep
 from src.models.item import ItemUpdate, ItemOut, ItemsOut
 import src.repositories.users as users_repo
 import src.repositories.items as items_repo
@@ -13,12 +13,13 @@ router = APIRouter(prefix="/items", tags=["items"])
 
 @router.get("/", response_model=ItemsOut)
 async def get_items(
+    currentUser: CurrentUser,
     session: SessionDep,
     title: str | None = Query(default=None, description="Поиск по title"),
     limit: int = Query(default=20, ge=1, le=100, description="Количество записей на странице"),
     offset: int = Query(default=0, ge=0, description="Сколько записей пропустить")
 ):
-    items, count = await items_repo.get_items_with_filters(session, title, None, limit, offset)
+    items, count = await items_repo.get_items_with_filters(session, title, currentUser.id, limit, offset)
     return ItemsOut(data=items, count=count)
 
 
