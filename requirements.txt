@@ -8,3 +8,4 @@ sqlmodel
 pydantic-settings
 pyjwt
 pwdlib[argon2,bcrypt]
+python-multipart

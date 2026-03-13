@@ -2,7 +2,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query
 
-from src.database import SessionDep
+from src.deps import SessionDep
 from src.models.user import User, UserCreate, UserUpdate, UserOut, UsersOut
 from src.models.item import ItemCreate, ItemOut, ItemsOut
 from src.repositories import users as users_repo

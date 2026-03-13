@@ -4,7 +4,7 @@ from sqlmodel import select, func
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.models.user import User, UserCreate, UserUpdate
-from src.core.security import get_password_hash
+from src.core.security import get_password_hash, verify_password
 
 
 def _apply_users_filters(stmt, username: str | None, is_active: bool | None):
@@ -71,3 +71,20 @@ async def update_user(session: AsyncSession, user: User, user_data: UserUpdate) 
 async def delete_user(session: AsyncSession, user: User) -> None:
     await session.delete(user)
     await session.commit()
+
+
+async def authenticate_user(session: AsyncSession, username: str, password: str) -> User | None:
+    user = await get_user_by_username(session, username)
+    if user is None:
+        return None
+
+    verified, updated_hash = verify_password(password, user.hashed_password)
+    if not verified:
+        return None
+
+    if updated_hash:
+        user.hashed_password = updated_hash
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+    return user
