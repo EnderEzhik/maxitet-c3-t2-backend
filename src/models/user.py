@@ -1,7 +1,9 @@
 from uuid import UUID, uuid4
-from sqlmodel import SQLModel, Field, Relationship
 from typing import TYPE_CHECKING
 
+from sqlmodel import SQLModel, Field, Relationship
+
+from src.models.role import Role, UserRoles
 
 if TYPE_CHECKING:
     from src.models.item import Item
@@ -36,3 +38,4 @@ class User(UserBase, table=True):
     id: UUID = Field(primary_key=True, default_factory=uuid4)
     hashed_password: str
     items: list["Item"] = Relationship(back_populates="user", passive_deletes="all")
+    roles: list["Role"] = Relationship(back_populates="users", link_model=UserRoles)

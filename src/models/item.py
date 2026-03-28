@@ -18,7 +18,11 @@ class ItemCreate(ItemBase):
 
 class ItemUpdate(ItemBase):
     title: str | None = Field(default=None, min_length=1, max_length=128)
-    user_id: UUID | None = None
+    # user_id: UUID | None = None
+
+
+class ItemOwnerUpdate(SQLModel):
+    user_id: UUID
 
 
 class ItemOut(ItemBase):

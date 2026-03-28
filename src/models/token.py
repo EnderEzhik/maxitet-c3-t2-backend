@@ -8,3 +8,4 @@ class Token(SQLModel):
 
 class TokenPayload(SQLModel):
     sub: str | None = None
+    scope: str = ""

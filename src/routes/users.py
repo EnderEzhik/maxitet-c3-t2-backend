@@ -1,12 +1,15 @@
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Security
 
-from src.deps import SessionDep
-from src.models.user import User, UserCreate, UserUpdate, UserOut, UsersOut
+from src.access import AccessUser
+from src.deps import SessionDep, get_current_user
+from src.models.user import UserCreate, UserUpdate, UserOut, UsersOut
 from src.models.item import ItemCreate, ItemOut, ItemsOut
 from src.repositories import users as users_repo
 from src.repositories import items as items_repo
+import src.services.users as users_service
 
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -17,8 +20,31 @@ async def create_user(session: SessionDep, user_data: UserCreate):
     return await users_repo.create_user(session, user_data)
 
 
+@router.get("/me", response_model=UserOut)
+async def get_me(
+    current_user: Annotated[AccessUser, Security(get_current_user, scopes=["users:read:own"])]
+):
+    return await users_service.get_me(current_user)
+
+
+@router.patch("/me", response_model=UserOut)
+async def update_me(
+    current_user: Annotated[AccessUser, Security(get_current_user, scopes=["users:write:own"])],
+    session: SessionDep,
+    user_data: UserUpdate
+):
+    try:
+        return await users_service.update_me(session, current_user, user_data)
+    except ValueError as e:
+        raise HTTPException(status_code=409, detail=str(e))
+
+
 @router.get("/{user_id}", response_model=UserOut)
-async def get_user_by_id(session: SessionDep, user_id: UUID):
+async def get_user_by_id(
+    current_user: Annotated[AccessUser, Security(get_current_user, scopes=["users:read:any"])],
+    session: SessionDep,
+    user_id: UUID
+):
     user = await users_repo.get_user(session, user_id)
     if not user:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
@@ -27,6 +53,7 @@ async def get_user_by_id(session: SessionDep, user_id: UUID):
 
 @router.get("/", response_model=UsersOut)
 async def get_users(
+    current_user: Annotated[AccessUser, Security(get_current_user, scopes=["users:read:any"])],
     session: SessionDep,
     username: str | None = Query(default=None, description="Поиск по username"),
     is_active: bool | None = Query(default=None, description="Фильтр активности"),
@@ -38,7 +65,12 @@ async def get_users(
 
 
 @router.patch("/{user_id}", response_model=UserOut)
-async def update_user(session: SessionDep, user_id: UUID, user_data: UserUpdate):
+async def update_user(
+    current_user: Annotated[AccessUser, Security(get_current_user, scopes=["users:write:any"])],
+    session: SessionDep,
+    user_id: UUID,
+    user_data: UserUpdate
+):
     user = await users_repo.get_user(session, user_id)
     if not user:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
@@ -53,7 +85,11 @@ async def update_user(session: SessionDep, user_id: UUID, user_data: UserUpdate)
 
 
 @router.delete("/{user_id}")
-async def delete_user_by_id(sessin: SessionDep, user_id: UUID):
+async def delete_user_by_id(
+    current_user: Annotated[AccessUser, Security(get_current_user, scopes=["users:write:any"])],
+    sessin: SessionDep,
+    user_id: UUID
+):
     user = await users_repo.get_user(sessin, user_id)
     if not user:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
@@ -62,7 +98,12 @@ async def delete_user_by_id(sessin: SessionDep, user_id: UUID):
 
 
 @router.post("/{user_id}/items", response_model=ItemOut)
-async def create_user_item(session: SessionDep, user_id: UUID, item_data: ItemCreate):
+async def create_user_item(
+    current_user: Annotated[AccessUser, Security(get_current_user, scopes=["items:write:any"])],
+    session: SessionDep,
+    user_id: UUID,
+    item_data: ItemCreate
+):
     user = await users_repo.get_user(session, user_id)
     if not user:
         raise HTTPException(status_code=404, detail=f"User {user_id} not found")
@@ -73,6 +114,7 @@ async def create_user_item(session: SessionDep, user_id: UUID, item_data: ItemCr
 
 @router.get("/{user_id}/items", response_model=ItemsOut)
 async def get_user_items(
+    current_user: Annotated[AccessUser, Security(get_current_user, scopes=["items:read:any"])],
     session: SessionDep,
     user_id: UUID,
     title: str | None = Query(default=None, description="Поиск по названию"),

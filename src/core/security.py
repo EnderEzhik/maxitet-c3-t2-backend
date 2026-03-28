@@ -18,13 +18,34 @@ password_hash = PasswordHash(
     )
 )
 
+ROLE_TO_SCOPES: dict[str, set[str]] = {
+    "user": {
+        "items:read:own",
+        "items:write:own",
+        "users:read:own",
+        "users:write:own"
+    },
+    "admin": {
+        "items:read:own",
+        "items:write:own",
+        "users:read:own",
+        "users:write:own",
 
-def create_access_token(sub: str | Any, expires_delta: timedelta) -> str:
+        "items:read:any",
+        "items:write:any",
+        "users:read:any",
+        "users:write:any"
+    }
+}
+
+
+def create_access_token(sub: str | Any, expires_delta: timedelta, scope: str = "") -> str:
     expire = datetime.now(timezone.utc) + expires_delta
 
     payload = {
         "sub": str(sub),
-        "exp": expire
+        "exp": expire,
+        "scope": scope
     }
 
     token = jwt.encode(
@@ -43,3 +64,10 @@ def get_password_hash(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> tuple[bool, str | None]:
     verified, updated_hash = password_hash.verify_and_update(plain_password, hashed_password)
     return verified, updated_hash
+
+
+def scopes_for_roles(role_names: list[str]) -> list[str]:
+    scopes: set[str] = set()
+    for role in role_names:
+        scopes.update(ROLE_TO_SCOPES.get(role, set()))
+    return sorted(scopes)

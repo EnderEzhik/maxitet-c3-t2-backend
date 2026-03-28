@@ -3,6 +3,7 @@ from uuid import UUID
 from sqlmodel import select, func
 from sqlmodel.ext.asyncio.session import AsyncSession
 
+from src.models.role import Role, RoleName, UserRoles
 from src.models.user import User, UserCreate, UserUpdate
 from src.core.security import get_password_hash, verify_password
 
@@ -22,6 +23,11 @@ async def create_user(session: AsyncSession, user_data: UserCreate) -> User:
     user_data = user_data.model_dump(exclude={"password"})
     new_user = User(**user_data, hashed_password=hashed_password)
     session.add(new_user)
+
+    stmt_role = select(Role).where(Role.name == RoleName.USER.value)
+    role_user = (await session.exec(stmt_role)).first()
+    session.add(UserRoles(user_id=new_user.id, role_id=role_user.id))
+
     await session.commit()
     await session.refresh(new_user)
     return new_user
